@@ -381,7 +381,7 @@ $(srcdir)/Makefile.in:  Makefile.am  $(top_srcdir)/configure.in $(ACLOCAL_M4)
 #>+ 3
 	cd $(top_srcdir) && \
 	  $(AUTOMAKE) --gnu  setup/src/Makefile
-	cd $(top_srcdir) && perl admin/am_edit -padmin setup/src/Makefile.in
+	cd $(top_srcdir) && perl admin/am_edit setup/src/Makefile.in
 Makefile:  $(srcdir)/Makefile.in  $(top_builddir)/config.status
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@ $(am__depfiles_maybe)
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
@@ -655,7 +655,12 @@ uninstall-am: uninstall-kde-icons  uninstall-binPROGRAMS uninstall-info-am \
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:
 
+#>+ 3
+diff3.moc: $(srcdir)/diff3.h
+	$(MOC) $(srcdir)/diff3.h -o diff3.moc
 
+#>+ 2
+mocs: diff3.moc
 
 #>+ 3
 diff.moc: $(srcdir)/diff.h
@@ -672,13 +677,6 @@ general_base.moc: $(srcdir)/general_base.h
 mocs: general_base.moc
 
 #>+ 3
-diff3.moc: $(srcdir)/diff3.h
-	$(MOC) $(srcdir)/diff3.h -o diff3.moc
-
-#>+ 2
-mocs: diff3.moc
-
-#>+ 3
 main.moc: $(srcdir)/main.h
 	$(MOC) $(srcdir)/main.h -o main.moc
 
@@ -687,10 +685,10 @@ mocs: main.moc
 
 #>+ 3
 clean-metasources:
-	-rm -f  diff.moc general_base.moc diff3.moc main.moc
+	-rm -f  diff3.moc diff.moc general_base.moc main.moc
 
 #>+ 2
-KDE_DIST=general.ui ui_base.ui general_base.cpp kdiffextsetup.lsm general_base.h hi32-app-kdiffextsetup.png kdiffextsetup.desktop ui_base.h CMakeLists.txt hi16-app-kdiffextsetup.png kdiffextsetupui.rc general.h 
+KDE_DIST=general.ui ui_base.ui general_base.cpp hi32-app-kdiffextsetup.png kdiffextsetup.lsm general_base.h kdiffextsetup.desktop CMakeLists.txt hi16-app-kdiffextsetup.png kdiffextsetupui.rc 
 
 #>+ 5
 clean-ui:
@@ -716,7 +714,7 @@ uninstall-kde-icons:
 force-reedit:
 		cd $(top_srcdir) && \
 	  $(AUTOMAKE) --gnu  setup/src/Makefile
-	cd $(top_srcdir) && perl admin/am_edit -padmin setup/src/Makefile.in
+	cd $(top_srcdir) && perl admin/am_edit setup/src/Makefile.in
 
 
 #>+ 21
@@ -742,7 +740,7 @@ bcheck-am:
 
 
 #>+ 11
-kdiffextsetup.all_cpp.cpp: $(srcdir)/Makefile.in $(srcdir)/main.cpp $(srcdir)/diff.cpp $(srcdir)/diff3.cpp $(srcdir)/ui_base.cpp $(srcdir)/general.cpp  general.moc ui_base.moc diff3.moc diff.moc main.moc
+kdiffextsetup.all_cpp.cpp: $(srcdir)/Makefile.in $(srcdir)/main.cpp $(srcdir)/diff.cpp $(srcdir)/diff3.cpp $(srcdir)/ui_base.cpp $(srcdir)/general.cpp  general.moc ui_base.moc diff.moc diff3.moc main.moc
 	@echo 'creating kdiffextsetup.all_cpp.cpp ...'; \
 	rm -f kdiffextsetup.all_cpp.files kdiffextsetup.all_cpp.final; \
 	echo "#define KDE_USE_FINAL 1" >> kdiffextsetup.all_cpp.final; \

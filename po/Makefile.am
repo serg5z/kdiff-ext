@@ -1,1 +1,2 @@
+PACKAGE = kdiffext
 POFILES = AUTO
