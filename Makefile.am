@@ -35,5 +35,5 @@ diff_extdoc_DATA = \
 EXTRA_DIST = admin Makefile.cvs kdiff-ext.kdevelop configure.in.in
 
 dist-hook:
-	cd $(top_distdir) && perl admin/am_edit -padmin
-	cd $(top_distdir) && $(MAKE) -f admin/Makefile.common subdirs
+	cd $(distdir) && perl admin/am_edit -padmin
+	cd $(distdir) && $(MAKE) -f admin/Makefile.common subdirs
