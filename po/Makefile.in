@@ -512,7 +512,7 @@ distdir-nls:$(GMOFILES)
 	  cp $(srcdir)/$$file $(distdir); \
 	done
 	for file in $(GMOFILES); do \
-	  cp $(srcdir)/$$file $(distdir); \
+	  cp $$file $(distdir); \
 	done
 
 #>+ 4

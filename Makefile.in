@@ -707,14 +707,14 @@ package-messages:
 	$(MAKE) -C po merge
 
 dist-hook:
-	cd $(top_distdir) && perl admin/am_edit -padmin
-	cd $(top_distdir) && $(MAKE) -f admin/Makefile.common subdirs
+	cd $(distdir) && perl admin/am_edit -padmin
+	cd $(distdir) && $(MAKE) -f admin/Makefile.common subdirs
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:
 
 #>+ 2
-KDE_DIST=stamp-h.in config.h.cmake subdirs configure.files kdiff-ext.spec Doxyfile CMakeLists.txt 
+KDE_DIST=stamp-h.in config.h.cmake subdirs configure.files kdiff-ext.spec Doxyfile svn-commit.tmp CMakeLists.txt 
 
 #>+ 2
 docs-am:
