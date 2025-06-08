@@ -1,0 +1,20 @@
+{
+  "KPlugin": {
+    "MimeTypes": [
+      "application/octet-stream"
+    ],
+    "Id": "dolphindiffplugin",
+    "Name": "Dolphin Diff Plugin",
+    "Description": "Adds a Compare with… item to Dolphin's context menu",
+    "Version": "1.0",
+    "Authors": [
+      {
+        "Name": "Your Name",
+        "Email": "your@email.com"
+      }
+    ],
+    "ServiceTypes": ["KFileItemAction/Plugin"]
+  },
+  "MimeType": "application/octet-stream;"
+}
+
