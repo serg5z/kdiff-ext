@@ -1,138 +1,147 @@
+#include "diff-ext.h"
+#include "logging.h"
+
 #include <KConfig>
 #include <KConfigGroup>
-#include <KAbstractFileItemActionPlugin>
-#include <KFileItemListProperties>
-#include <KPluginFactory>
 #include <KLocalizedString>
 #include <QAction>
-#include <QMenu>
-#include <QProcess>
+#include <QFileInfo>
+#include <QFontMetrics>
+#include <QIcon>
 #include <QInputDialog>
-#include <QFileDialog>
+#include <QMenu>
 #include <QMessageBox>
-#include <QFileIconProvider>
 #include <QMimeDatabase>
 #include <QMimeType>
-#include <QFileInfo>
-#include <QIcon>
+#include <QProcess>
+#include <KPluginFactory>
 
-class DiffPlugin : public KAbstractFileItemActionPlugin
-{
-    Q_OBJECT
-public:
-    DiffPlugin(QObject *parent, const QVariantList&) : DiffPlugin(parent) {
+
+DiffPlugin::DiffPlugin(QObject *parent, const QVariantList&) : DiffPlugin(parent) {}
+
+DiffPlugin::DiffPlugin(QObject *parent) : KAbstractFileItemActionPlugin(parent) {
+    loadConfig();
+}
+
+DiffPlugin::~DiffPlugin() {
+    saveConfig();
+}
+
+QList<QAction*> DiffPlugin::actions(const KFileItemListProperties& fileItemInfos, QWidget* parentWidget) {
+    QFontMetrics fm(parentWidget->font());
+    int maxWidth = 250;
+    QList<QAction*> actions;
+    const QList<QUrl> urls = fileItemInfos.urlList();
+    QAction* separator = new QAction(parentWidget);
+
+    separator->setSeparator(true);
+
+    actions << separator;
+
+    if(urls.size() == 2) {
+        QAction* compareAction = new QAction(i18n("Compare"), parentWidget);
+        QObject::connect(compareAction, &QAction::triggered, [this, urls]() {
+            launchDiffTool(urls.at(0), urls.at(1));
+        });
+        actions << compareAction;
     }
 
-    DiffPlugin(QObject *parent = nullptr) : KAbstractFileItemActionPlugin(parent) {
-        // Load the stored configuration (if any)
-        KConfig config(QStringLiteral("diffpluginrc"));
-        KConfigGroup group = config.group("DiffTool");
-        m_diffToolPath = group.readEntry("DiffToolPath", "meld"); // Default to "meld"
+    if(urls.size() == 1 && !_mru_list.isEmpty()) {
+        QUrl current = urls.first();
+        QUrl head = QUrl(_mru_list.first());
+        if(head != current) {
+            QAction* compareMRU = new QAction(i18n("Compare with ") + fm.elidedText(head.toLocalFile(), Qt::ElideMiddle, maxWidth), parentWidget);
+            QObject::connect(compareMRU, &QAction::triggered, [this, head, current]() {
+                launchDiffTool(head, current);
+            });
+            actions << compareMRU;
+        }
     }
+
+    if(!urls.isEmpty()) {
+        QAction* rememberAction = new QAction(i18n("Remember"), parentWidget);
+        QObject::connect(rememberAction, &QAction::triggered, [this, urls]() {
+            for(const QUrl& file : urls)
+                update_mru_list(file);
+        });
+        actions << rememberAction;
+    }
+
+    if(urls.size() == 1 && !_mru_list.isEmpty()) {
+        QUrl current = urls.first();
+        QMenu* mruMenu = new QMenu(i18n("Compare with MRU"), parentWidget);
+
+        for(int i = 0; i < _mru_list.size(); ++i) {
+            QUrl mruUrl(_mru_list[i]);
+            QFileInfo info(mruUrl.toLocalFile());
+            QMimeDatabase db;
+            QMimeType mime = db.mimeTypeForFile(info);
+            QIcon icon = QIcon::fromTheme(mime.iconName());
+
+            QAction* mruAction = new QAction(icon, fm.elidedText(mruUrl.toLocalFile(), Qt::ElideMiddle, maxWidth), mruMenu);
+            mruAction->setData(i);
+
+            QObject::connect(mruAction, &QAction::triggered, [this, mruAction, current]() {
+                int index = mruAction->data().toInt();
+                if(index >= 0 && index < _mru_list.size())
+                    launchDiffTool(QUrl(_mru_list.at(index)), current);
+            });
+
+            mruMenu->addAction(mruAction);
+        }
+
+        mruMenu->addSeparator();
+
+        QAction* clearAction = new QAction(QIcon::fromTheme(QStringLiteral("edit-delete")), i18n("Clear MRU List"), mruMenu);
+        QObject::connect(clearAction, &QAction::triggered, [this]() {
+            _mru_list.clear();
+        });
+        mruMenu->addAction(clearAction);
+
+        QAction* submenuAction = new QAction(i18n("Compare with MRU"), parentWidget);
+        submenuAction->setMenu(mruMenu);
+        actions << submenuAction;
+    }
+
+    return actions;
+}
+
+void DiffPlugin::loadConfig() {
+    KConfig config(QStringLiteral("diff-extrc"));
+    KConfigGroup group = config.group("DiffTool");
+    _diff_tool_path = group.readEntry("DiffToolPath", "meld");
+
+    KConfigGroup mru = config.group("MRU");
+    _mru_list = mru.readEntry("Files", QStringList());
+    _mru_size_limit = mru.readEntry("Limit", 16);
+}
+
+void DiffPlugin::saveConfig() {
+    KConfig config(QStringLiteral("diff-extrc"));
+    KConfigGroup group = config.group("DiffTool");
+    group.writeEntry("DiffToolPath", _diff_tool_path);
+
+    KConfigGroup mru = config.group("MRU");
+    mru.writeEntry("Files", _mru_list);
+    mru.writeEntry("Limit", _mru_size_limit);
+
+    config.sync();
+}
+
+void DiffPlugin::update_mru_list(const QUrl& fileUrl) {
+    QString fileStr = fileUrl.toString();
     
-    QList<QAction*> actions(const KFileItemListProperties& fileItemInfos, QWidget* parentWidget) override {
-        QList<QAction*> actions;
-        const QList<QUrl> urls = fileItemInfos.urlList();
+    _mru_list.removeAll(fileStr);
+    _mru_list.prepend(fileStr);
 
-        if (!urls.isEmpty()) {
-            // Remember in MRU List (for 1+ files)
-            QAction* rememberAction = new QAction(i18n("Remember in MRU List"), parentWidget);
-            QObject::connect(rememberAction, &QAction::triggered, [this, urls]() {
-                for (const QUrl& file : urls) {
-                    updateMRUList(file);
-                }
-            });
-            actions << rememberAction;
-        }
+    while(_mru_list.size() > _mru_size_limit) {
+        _mru_list.removeLast();
+    }        
+}
 
-        if (urls.size() == 2) {
-            // Compare two selected files
-            QAction* compareAction = new QAction(i18n("Compare Selected Files"), parentWidget);
-            QObject::connect(compareAction, &QAction::triggered, [urls]() {
-                QProcess::startDetached(QStringLiteral("meld"), { urls.at(0).toLocalFile(), urls.at(1).toLocalFile() });
-            });
-            actions << compareAction;
-        }
-
-        if (urls.size() == 1 && !mruList.isEmpty()) {
-            // Compare with MRU Head
-            QUrl current = urls.first();
-            QUrl head = QUrl(mruList.first());
-            if (head != current) {
-                QAction* compareMRU = new QAction(i18n("Compare with MRU Head"), parentWidget);
-                QObject::connect(compareMRU, &QAction::triggered, [head, current]() {
-                    QProcess::startDetached(QStringLiteral("meld"), { head.toLocalFile(), current.toLocalFile() });
-                });
-                actions << compareMRU;
-            }
-        }
-
-        // MRU Submenu
-        if (!urls.isEmpty() && !mruList.isEmpty()) {
-            QMenu* mruMenu = new QMenu(i18n("Compare with MRU"), parentWidget);
-
-            for (const QString& path : mruList) {
-                QUrl mruUrl(path);
-                QFileInfo info(mruUrl.toLocalFile());
-                QMimeDatabase db;
-                QMimeType mime = db.mimeTypeForFile(info);
-                QIcon icon = QIcon::fromTheme(mime.iconName());
-                
-                QAction* mruAction = new QAction(icon, mruUrl.fileName(), mruMenu);
-                QObject::connect(mruAction, &QAction::triggered, [mruUrl, urls]() {
-                    for (const QUrl& selected : urls) {
-                        if (selected != mruUrl) {
-                            QProcess::startDetached(QStringLiteral("meld"), { mruUrl.toLocalFile(), selected.toLocalFile() });
-                        }
-                    }
-                });
-                mruMenu->addAction(mruAction);
-            }
-
-            mruMenu->addSeparator();
-
-            // Clear MRU List action
-            QAction* clearAction = new QAction(QIcon::fromTheme(QStringLiteral("edit-delete")), i18n("Clear MRU List"), mruMenu);
-            QObject::connect(clearAction, &QAction::triggered, [this]() {
-                mruList.clear();
-                saveMRUList();
-            });
-            mruMenu->addAction(clearAction);
-
-            QAction* submenuAction = new QAction(i18n("Compare with MRU"), parentWidget);
-            submenuAction->setMenu(mruMenu);
-            actions << submenuAction;
-        }
-
-        return actions;
-    }
-
-private:
-    QString m_diffToolPath; // Path to the diff tool executable
-    QStringList mruList;
-
-    void loadMRUList() {
-        KConfig config(QStringLiteral("diffpluginrc"));
-        KConfigGroup group = config.group("MRU");
-        mruList = group.readEntry("Files", QStringList());
-    }
-
-    void saveMRUList() {
-        KConfig config(QStringLiteral("diffpluginrc"));
-        KConfigGroup group = config.group("MRU");
-        group.writeEntry("Files", mruList);
-        config.sync();
-    }
-
-    void updateMRUList(const QUrl& fileUrl) {
-        QString fileStr = fileUrl.toString();
-        mruList.removeAll(fileStr);
-        mruList.prepend(fileStr);
-        while (mruList.size() > 10)
-            mruList.removeLast();
-        saveMRUList();
-    }
-};
+void DiffPlugin::launchDiffTool(const QUrl& file1, const QUrl& file2) const {
+    QProcess::startDetached(_diff_tool_path, { file1.toLocalFile(), file2.toLocalFile() });
+}
 
 K_PLUGIN_FACTORY_WITH_JSON(DiffPluginFactory, "diff-ext.json", registerPlugin<DiffPlugin>();)
 
