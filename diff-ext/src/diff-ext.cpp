@@ -15,6 +15,7 @@
 #include <QMimeType>
 #include <QProcess>
 #include <KPluginFactory>
+#include <QDir>
 
 
 DiffPlugin::DiffPlugin(QObject *parent, const QVariantList&) : DiffPlugin(parent) {}
@@ -39,7 +40,7 @@ QList<QAction*> DiffPlugin::actions(const KFileItemListProperties& fileItemInfos
     actions << separator;
 
     if(urls.size() == 2) {
-        QAction* compareAction = new QAction(i18n("Compare"), parentWidget);
+        QAction* compareAction = new QAction(QIcon(QStringLiteral(":/icons/compare.svg")), i18n("Compare"), parentWidget);
         QObject::connect(compareAction, &QAction::triggered, [this, urls]() {
             launchDiffTool(urls.at(0), urls.at(1));
         });
@@ -50,7 +51,7 @@ QList<QAction*> DiffPlugin::actions(const KFileItemListProperties& fileItemInfos
         QUrl current = urls.first();
         QUrl head = QUrl(_mru_list.first());
         if(head != current) {
-            QAction* compareMRU = new QAction(i18n("Compare with ") + fm.elidedText(head.toLocalFile(), Qt::ElideMiddle, maxWidth), parentWidget);
+            QAction* compareMRU = new QAction(QIcon(QStringLiteral(":/icons/compare.svg")), i18n("Compare with ") + fm.elidedText(head.toLocalFile(), Qt::ElideMiddle, maxWidth), parentWidget);
             QObject::connect(compareMRU, &QAction::triggered, [this, head, current]() {
                 launchDiffTool(head, current);
             });
@@ -59,7 +60,7 @@ QList<QAction*> DiffPlugin::actions(const KFileItemListProperties& fileItemInfos
     }
 
     if(!urls.isEmpty()) {
-        QAction* rememberAction = new QAction(i18n("Remember"), parentWidget);
+        QAction* rememberAction = new QAction(QIcon(QStringLiteral(":/icons/remember.svg")), i18n("Remember"), parentWidget);
         QObject::connect(rememberAction, &QAction::triggered, [this, urls]() {
             for(const QUrl& file : urls)
                 update_mru_list(file);
@@ -69,7 +70,7 @@ QList<QAction*> DiffPlugin::actions(const KFileItemListProperties& fileItemInfos
 
     if(urls.size() == 1 && !_mru_list.isEmpty()) {
         QUrl current = urls.first();
-        QMenu* mruMenu = new QMenu(i18n("Compare with MRU"), parentWidget);
+        QMenu* mruMenu = new QMenu(i18n("Compare with"), parentWidget);
 
         for(int i = 0; i < _mru_list.size(); ++i) {
             QUrl mruUrl(_mru_list[i]);
@@ -98,7 +99,7 @@ QList<QAction*> DiffPlugin::actions(const KFileItemListProperties& fileItemInfos
         });
         mruMenu->addAction(clearAction);
 
-        QAction* submenuAction = new QAction(i18n("Compare with MRU"), parentWidget);
+        QAction* submenuAction = new QAction(QIcon(QStringLiteral(":/icons/compare.svg")), i18n("Compare with MRU"), parentWidget);
         submenuAction->setMenu(mruMenu);
         actions << submenuAction;
     }
