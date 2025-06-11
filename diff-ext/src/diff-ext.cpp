@@ -15,7 +15,6 @@
 #include <QMimeType>
 #include <QProcess>
 #include <KPluginFactory>
-#include <QDir>
 
 
 DiffPlugin::DiffPlugin(QObject *parent, const QVariantList&) : DiffPlugin(parent) {}
