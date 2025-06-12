@@ -1,10 +1,13 @@
 name: Release Source Package
 
 on:
-  push:
+  push:    
     tags:
-      - "v*.*.*"  # e.g. v1.0.0
+      - "v*.*.*"  
 
+permissions:
+  contents: write
+  
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -28,11 +31,18 @@ jobs:
           cd build
           cpack --config CPackSourceConfig.cmake
 
+      - name: Create binary package
+        run: |
+          cd build
+          cmake --build .
+          cpack 
+  
       - name: Upload release to GitHub
         uses: softprops/action-gh-release@v2
         with:
           files: |
             build/*.tar.gz
+            build/*.deb
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
