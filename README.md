@@ -73,11 +73,11 @@ cpack --config CPackSourceConfig.cmake
 
 ## 📜 License
 
-MIT or GPL (please clarify).
+BSD
 
 ---
 
 ## 📩 Authors
 
-* \[Your Name] – initial development
+* \[Sergey Zorin] – initial development
 
