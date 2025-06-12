@@ -18,6 +18,7 @@ include(ECMQtDeclareLoggingCategory)
 set(CMAKE_AUTOMOC ON) 
 set(CMAKE_AUTORCC ON)
 set(KDE_INSTALL_QTPLUGINDIR lib/aarch64-linux-gnu/qt5/plugins)
+message(STATUS "QT plugin dir: ${KDE_INSTALL_QTPLUGINDIR}")
 
 qt5_add_resources(GENERATED_RESOURCE_SOURCES resources.qrc)
 
