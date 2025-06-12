@@ -2,9 +2,12 @@
 #include <QVBoxLayout>
 #include <QLabel>
 #include <QDialogButtonBox>
+#include <QIcon>
+
 
 AboutDialog::AboutDialog(QWidget* parent) : QDialog(parent) {
     setWindowTitle(tr("About KDiff Ext Config"));
+    setWindowIcon(QIcon(QStringLiteral(":/icons/app-icon.svg")));
     setModal(true);
 
     auto* layout = new QVBoxLayout(this);

@@ -6,12 +6,14 @@
 #include <KConfigGroup>
 #include <QFileDialog>
 #include <QDialogButtonBox>
-#include <QTimer>
+#include <QIcon>
+
 
 DiffExtConfig::DiffExtConfig(QWidget *parent)
     : QDialog(parent)
     , ui(new Ui::DiffExtConfig) {
     ui->setupUi(this);
+    setWindowIcon(QIcon(QStringLiteral(":/icons/app-icon.svg")));
 
     connect(ui->browseButton, &QPushButton::clicked,
             this, &DiffExtConfig::browseDiffTool);

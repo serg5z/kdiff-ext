@@ -20,6 +20,8 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 
+qt5_add_resources(GENERATED_RESOURCE_SOURCES resources.qrc)
+
 add_executable(kdiff-ext-config
     src/main.cpp
     src/diff-ext-config.h
@@ -27,6 +29,7 @@ add_executable(kdiff-ext-config
     src/aboutdialog.h
     src/aboutdialog.cpp
     src/diff-ext-config.ui
+    ${GENERATED_RESOURCE_SOURCES}
 )
 
 target_include_directories(kdiff-ext-config PRIVATE /usr/include/KF5/KConfigCore)
