@@ -6,8 +6,7 @@ namespace Ui {
     class DiffExtConfig;
 }
 
-class DiffExtConfig : public QDialog
-{
+class DiffExtConfig : public QDialog {
     Q_OBJECT
 
     public:

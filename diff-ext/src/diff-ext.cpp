@@ -17,7 +17,8 @@
 #include <KPluginFactory>
 
 
-DiffPlugin::DiffPlugin(QObject *parent, const QVariantList&) : DiffPlugin(parent) {}
+DiffPlugin::DiffPlugin(QObject *parent, const QVariantList&) : DiffPlugin(parent) {
+}
 
 DiffPlugin::DiffPlugin(QObject *parent) : KAbstractFileItemActionPlugin(parent) {
     loadConfig();

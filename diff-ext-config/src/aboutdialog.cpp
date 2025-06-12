@@ -3,8 +3,7 @@
 #include <QLabel>
 #include <QDialogButtonBox>
 
-AboutDialog::AboutDialog(QWidget* parent) : QDialog(parent)
-{
+AboutDialog::AboutDialog(QWidget* parent) : QDialog(parent) {
     setWindowTitle(tr("About KDiff Ext Config"));
     setModal(true);
 

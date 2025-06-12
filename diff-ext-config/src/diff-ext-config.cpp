@@ -10,8 +10,7 @@
 
 DiffExtConfig::DiffExtConfig(QWidget *parent)
     : QDialog(parent)
-    , ui(new Ui::DiffExtConfig)
-{
+    , ui(new Ui::DiffExtConfig) {
     ui->setupUi(this);
 
     connect(ui->browseButton, &QPushButton::clicked,
@@ -32,21 +31,18 @@ DiffExtConfig::DiffExtConfig(QWidget *parent)
     loadConfig();
 }
 
-DiffExtConfig::~DiffExtConfig()
-{
+DiffExtConfig::~DiffExtConfig() {
     delete ui;
 }
 
-void DiffExtConfig::browseDiffTool()
-{
+void DiffExtConfig::browseDiffTool() {
     QString path = QFileDialog::getOpenFileName(this, tr("Select Diff Tool"));
     if (!path.isEmpty()) {
         ui->diffToolLineEdit->setText(path);
     }
 }
 
-void DiffExtConfig::loadConfig()
-{
+void DiffExtConfig::loadConfig() {
     KConfig config(QStringLiteral("diff-extrc"));
     KConfigGroup group = config.group("DiffTool");
     ui->diffToolLineEdit->setText(group.readEntry("DiffToolPath", "meld"));
@@ -55,8 +51,7 @@ void DiffExtConfig::loadConfig()
     ui->mruLimitSpinBox->setValue(mru.readEntry("Limit", 16));
 }
 
-void DiffExtConfig::saveConfig()
-{
+void DiffExtConfig::saveConfig() {
     KConfig config(QStringLiteral("diff-extrc"));
 
     KConfigGroup group = config.group("DiffTool");
@@ -68,8 +63,7 @@ void DiffExtConfig::saveConfig()
     config.sync();
 }
 
-void DiffExtConfig::accept()
-{
+void DiffExtConfig::accept() {
     saveConfig();
     QDialog::accept();
 }
