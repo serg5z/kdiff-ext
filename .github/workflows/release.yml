@@ -1,0 +1,38 @@
+name: Release Source Package
+
+on:
+  push:
+    tags:
+      - "v*.*.*"  # e.g. v1.0.0
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y cmake ninja-build qtbase5-dev \
+            extra-cmake-modules libkf5i18n-dev libkf5coreaddons-dev \
+            libkf5kio-dev libkf5widgetsaddons-dev
+
+      - name: Configure (CMake)
+        run: cmake -S . -B build -GNinja
+
+      - name: Create source package
+        run: |
+          cd build
+          cpack --config ../CPackSourceConfig.cmake
+
+      - name: Upload release to GitHub
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            build/*.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
