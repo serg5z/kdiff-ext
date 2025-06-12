@@ -26,7 +26,7 @@ jobs:
       - name: Create source package
         run: |
           cd build
-          cpack --config ../CPackSourceConfig.cmake
+          cpack --config CPackSourceConfig.cmake
 
       - name: Upload release to GitHub
         uses: softprops/action-gh-release@v2
