@@ -1,7 +1,6 @@
 name: Release Source Package
 
 on:
-  workflow_dispatch:  
   push:    
     tags:
       - "v*.*.*"  
@@ -32,6 +31,7 @@ jobs:
       - name: Create binary package
         run: |
           cd build
+          cmake --build .
           cpack 
   
       - name: Upload release to GitHub
