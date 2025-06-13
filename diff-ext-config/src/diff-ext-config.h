@@ -2,6 +2,9 @@
 
 #include <QDialog>
 
+#include "config.h"
+
+
 namespace Ui {
     class DiffExtConfig;
 }
@@ -14,12 +17,12 @@ class DiffExtConfig : public QDialog {
         ~DiffExtConfig();
 
     private Q_SLOTS:
-        void loadConfig();
-        void saveConfig();
         void browseDiffTool();
         void showAboutDialog();
+        void apply();
         void accept() override;
 
     private:
         Ui::DiffExtConfig *ui;
+        Config _config;
 };

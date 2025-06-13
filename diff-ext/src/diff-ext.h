@@ -8,6 +8,9 @@
 #include <QUrl>
 #include <QWidget>
 
+#include "config.h"
+
+
 class DiffPlugin : public KAbstractFileItemActionPlugin {
     Q_OBJECT
 
@@ -18,13 +21,9 @@ class DiffPlugin : public KAbstractFileItemActionPlugin {
 
         QList<QAction*> actions(const KFileItemListProperties& fileItemInfos, QWidget* parentWidget) override;
 
-    private:
-        QString _diff_tool_path;
-        QStringList _mru_list;
-        int _mru_size_limit = 16;
-
-        void loadConfig();
-        void saveConfig();
-        void update_mru_list(const QUrl& fileUrl);
+    private:        
         void launchDiffTool(const QUrl& file1, const QUrl& file2) const;
+
+    private:
+        static Config _config;
 };

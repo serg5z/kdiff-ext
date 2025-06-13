@@ -40,7 +40,12 @@ kcoreaddons_add_plugin(kdiff-ext
         ${GENERATED_RESOURCE_SOURCES}
 )
 
+target_include_directories(kdiff-ext
+    PRIVATE ${CMAKE_SOURCE_DIR}/include
+)
+
 target_link_libraries(kdiff-ext
+    config-lib
     KF5::I18n
     KF5::CoreAddons
     KF5::KIOCore

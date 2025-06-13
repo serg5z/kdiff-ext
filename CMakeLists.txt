@@ -22,6 +22,7 @@ set(CPACK_STRIP_FILES TRUE)
 set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Sergey Zorin")
 set(CPACK_GENERATOR "DEB")
 
+add_subdirectory(config)
 add_subdirectory(diff-ext)
 add_subdirectory(diff-ext-config)
 

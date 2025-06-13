@@ -17,15 +17,16 @@
 #include <KPluginFactory>
 
 
+Config DiffPlugin::_config = Config();
+
 DiffPlugin::DiffPlugin(QObject *parent, const QVariantList&) : DiffPlugin(parent) {
 }
 
 DiffPlugin::DiffPlugin(QObject *parent) : KAbstractFileItemActionPlugin(parent) {
-    loadConfig();
 }
 
 DiffPlugin::~DiffPlugin() {
-    saveConfig();
+    _config.save();
 }
 
 QList<QAction*> DiffPlugin::actions(const KFileItemListProperties& fileItemInfos, QWidget* parentWidget) {
@@ -34,6 +35,7 @@ QList<QAction*> DiffPlugin::actions(const KFileItemListProperties& fileItemInfos
     QList<QAction*> actions;
     const QList<QUrl> urls = fileItemInfos.urlList();
     QAction* separator = new QAction(parentWidget);
+    const QStringList& mru = _config.mruList();
 
     separator->setSeparator(true);
 
@@ -47,9 +49,9 @@ QList<QAction*> DiffPlugin::actions(const KFileItemListProperties& fileItemInfos
         actions << compareAction;
     }
 
-    if(urls.size() == 1 && !_mru_list.isEmpty()) {
+    if(urls.size() == 1 && !mru.isEmpty()) {
         QUrl current = urls.first();
-        QUrl head = QUrl(_mru_list.first());
+        QUrl head = QUrl(mru.first());
         if(head != current) {
             QAction* compareMRU = new QAction(QIcon(QStringLiteral(":/icons/compare.svg")), i18n("Compare with ") + fm.elidedText(head.toLocalFile(), Qt::ElideMiddle, maxWidth), parentWidget);
             QObject::connect(compareMRU, &QAction::triggered, [this, head, current]() {
@@ -62,18 +64,19 @@ QList<QAction*> DiffPlugin::actions(const KFileItemListProperties& fileItemInfos
     if(!urls.isEmpty()) {
         QAction* rememberAction = new QAction(QIcon(QStringLiteral(":/icons/remember.svg")), i18n("Remember"), parentWidget);
         QObject::connect(rememberAction, &QAction::triggered, [this, urls]() {
-            for(const QUrl& file : urls)
-                update_mru_list(file);
+            for(const QUrl& file : urls) {
+                _config.addToMru(file.toString());
+            }
         });
         actions << rememberAction;
     }
 
-    if(urls.size() == 1 && !_mru_list.isEmpty()) {
+    if(urls.size() == 1 && !mru.isEmpty()) {
         QUrl current = urls.first();
         QMenu* mruMenu = new QMenu(i18n("Compare with"), parentWidget);
 
-        for(int i = 0; i < _mru_list.size(); ++i) {
-            QUrl mruUrl(_mru_list[i]);
+        for(int i = 0; i < mru.size(); ++i) {
+            QUrl mruUrl(mru[i]);
             QFileInfo info(mruUrl.toLocalFile());
             QMimeDatabase db;
             QMimeType mime = db.mimeTypeForFile(info);
@@ -82,10 +85,11 @@ QList<QAction*> DiffPlugin::actions(const KFileItemListProperties& fileItemInfos
             QAction* mruAction = new QAction(icon, fm.elidedText(mruUrl.toLocalFile(), Qt::ElideMiddle, maxWidth), mruMenu);
             mruAction->setData(i);
 
-            QObject::connect(mruAction, &QAction::triggered, [this, mruAction, current]() {
+            QObject::connect(mruAction, &QAction::triggered, [this, mru, mruAction, current]() {
                 int index = mruAction->data().toInt();
-                if(index >= 0 && index < _mru_list.size())
-                    launchDiffTool(QUrl(_mru_list.at(index)), current);
+                if(index >= 0 && index < mru.size()) {
+                    launchDiffTool(QUrl(mru.at(index)), current);
+                }
             });
 
             mruMenu->addAction(mruAction);
@@ -95,7 +99,7 @@ QList<QAction*> DiffPlugin::actions(const KFileItemListProperties& fileItemInfos
 
         QAction* clearAction = new QAction(QIcon::fromTheme(QStringLiteral("edit-delete")), i18n("Clear MRU List"), mruMenu);
         QObject::connect(clearAction, &QAction::triggered, [this]() {
-            _mru_list.clear();
+            _config.clearMru();
         });
         mruMenu->addAction(clearAction);
 
@@ -107,41 +111,8 @@ QList<QAction*> DiffPlugin::actions(const KFileItemListProperties& fileItemInfos
     return actions;
 }
 
-void DiffPlugin::loadConfig() {
-    KConfig config(QStringLiteral("diff-extrc"));
-    KConfigGroup group = config.group("DiffTool");
-    _diff_tool_path = group.readEntry("DiffToolPath", "meld");
-
-    KConfigGroup mru = config.group("MRU");
-    _mru_list = mru.readEntry("Files", QStringList());
-    _mru_size_limit = mru.readEntry("Limit", 16);
-}
-
-void DiffPlugin::saveConfig() {
-    KConfig config(QStringLiteral("diff-extrc"));
-    KConfigGroup group = config.group("DiffTool");
-    group.writeEntry("DiffToolPath", _diff_tool_path);
-
-    KConfigGroup mru = config.group("MRU");
-    mru.writeEntry("Files", _mru_list);
-    mru.writeEntry("Limit", _mru_size_limit);
-
-    config.sync();
-}
-
-void DiffPlugin::update_mru_list(const QUrl& fileUrl) {
-    QString fileStr = fileUrl.toString();
-    
-    _mru_list.removeAll(fileStr);
-    _mru_list.prepend(fileStr);
-
-    while(_mru_list.size() > _mru_size_limit) {
-        _mru_list.removeLast();
-    }        
-}
-
 void DiffPlugin::launchDiffTool(const QUrl& file1, const QUrl& file2) const {
-    QProcess::startDetached(_diff_tool_path, { file1.toLocalFile(), file2.toLocalFile() });
+    QProcess::startDetached(_config.diffTool(), { file1.toLocalFile(), file2.toLocalFile() });
 }
 
 K_PLUGIN_FACTORY_WITH_JSON(DiffPluginFactory, "diff-ext.json", registerPlugin<DiffPlugin>();)

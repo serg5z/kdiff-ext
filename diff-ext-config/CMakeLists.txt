@@ -32,9 +32,13 @@ add_executable(kdiff-ext-config
     ${GENERATED_RESOURCE_SOURCES}
 )
 
-target_include_directories(kdiff-ext-config PRIVATE /usr/include/KF5/KConfigCore)
+# target_include_directories(kdiff-ext-config PRIVATE /usr/include/KF5/KConfigCore)
+target_include_directories(kdiff-ext-config
+    PRIVATE ${CMAKE_SOURCE_DIR}/include
+)
 
 target_link_libraries(kdiff-ext-config
+    config-lib
     Qt5::Widgets
     KF5::CoreAddons
     KF5ConfigCore
